@@ -41,8 +41,9 @@ defmodule Jwt do
 
     defp verify_signature({:ok, %{exp: exponent, mod: modulus}}, header_b64, claims_b64, signature) do
         msg = header_b64 <> "." <> claims_b64
-
-        case :crypto.verify :rsa, :sha256, msg, signature, [exponent, modulus] do
+        mod = :binary.decode_unsigned(Base.url_decode64!(modulus, padding: false))
+        exp = :binary.decode_unsigned(Base.url_decode64!(exponent, padding: false))
+        case :crypto.verify :rsa, :sha256, msg, signature, [exp, mod] do
             true -> {:ok, Poison.Parser.parse! Base.url_decode64!(claims_b64, padding: false)}
             false -> @invalid_signature_error
         end
